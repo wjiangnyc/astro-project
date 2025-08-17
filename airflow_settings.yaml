@@ -1,0 +1,16 @@
+connections:
+  - conn_id: starburst_trino
+    conn_type: trino
+    host: sbe-wei-jiang-lab01.enablement.starburstdata.net
+    port: 443
+    login: starburst_service
+    password: StarburstR0cks!
+    extra: |
+      {
+        "protocol": "https",
+        "session_properties": {
+          "roles": {
+            "system": "ROLE{sysadmin}"
+          }
+        }
+      }
