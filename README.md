@@ -1,45 +1,70 @@
-# Overview
+# Rocket360: SpaceX Launch Ingestion Pipeline (Airflow DAGs)
 
-Welcome to Astronomer! This project was generated after you ran 'astro dev init' using the Astronomer CLI. This readme describes the contents of the project, as well as how to run Apache Airflow on your local machine.
+This repository contains a set of Apache Airflow DAGs designed to automate the ingestion, transformation, and loading of SpaceX launch data from the public SpaceX API into a Starburst-powered data lake. The resulting datasets power the Rocket360 Dashboard, which provides deep operational insights into SpaceX’s launch program.
 
-Astronomer is the best place to host Apache Airflow -- try it out with a free trial at [astronomer.io](https://www.astronomer.io/).
+---
 
-# Project Contents
+## Overview
 
-Your Astro project contains the following files and folders:
+The pipeline:
+- Ingests real-time data from SpaceX API endpoints:
+  - `/launches`
+  - `/launchpads`
+  - `/rockets`
+  - `/launches/upcoming`
+- Transforms and flattens complex nested JSON structures into tabular formats.
+- Writes the data into Iceberg tables via PyStarburst (a Python client for Starburst/Trino).
+- Enables downstream analytics and dashboarding through Rocket360, a comprehensive analytics dashboard built on top of the data lake.
 
-- dags: This folder contains the Python files for your Airflow DAGs. By default, this directory includes one example DAG:
-  - `example_astronauts`: This DAG shows a simple ETL pipeline example that queries the list of astronauts currently in space from the Open Notify API and prints a statement for each astronaut. The DAG uses the TaskFlow API to define tasks in Python, and dynamic task mapping to dynamically print a statement for each astronaut. For more on how this DAG works, see our [Getting started tutorial](https://docs.astronomer.io/learn/get-started-with-airflow).
-- Dockerfile: This file contains a versioned Astro Runtime Docker image that provides a differentiated Airflow experience. If you want to execute other commands or overrides at runtime, specify them here.
-- include: This folder contains any additional files that you want to include as part of your project. It is empty by default.
-- packages.txt: Install OS-level packages needed for your project by adding them to this file. It is empty by default.
-- requirements.txt: Install Python packages needed for your project by adding them to this file. It is empty by default.
-- plugins: Add custom or community plugins for your project to this file. It is empty by default.
-- airflow_settings.yaml: Use this local-only file to specify Airflow Connections, Variables, and Pools instead of entering them in the Airflow UI as you develop DAGs in this project.
+---
 
-# Deploy Your Project Locally
+## Rocket360 Dashboard Capabilities
 
-1. Start Airflow on your local machine by running 'astro dev start'.
+Once the data is ingested and available, the Rocket360 dashboard enables analysis of:
 
-This command will spin up 4 Docker containers on your machine, each for a different Airflow component:
+### Launch Metrics
+- Total number of launches
+- Launches over time
+- Launch success vs. failure rates
+- Launches broken down by:
+  - Rocket type
+  - Launchpad
+  - Year or quarter
 
-- Postgres: Airflow's Metadata Database
-- Webserver: The Airflow component responsible for rendering the Airflow UI
-- Scheduler: The Airflow component responsible for monitoring and triggering tasks
-- Triggerer: The Airflow component responsible for triggering deferred tasks
+### Financial Metrics
+- Total cost of all launches
+- Financial losses from failed launches
+- ROI estimates based on reuse and success rates
+- Projected costs for upcoming launches
 
-2. Verify that all 4 Docker containers were created by running 'docker ps'.
+### Reusability Insights
+- Number of reused rockets
+- Reuse frequency by rocket type
+- Cost savings from reused boosters
 
-Note: Running 'astro dev start' will start your project with the Airflow Webserver exposed at port 8080 and Postgres exposed at port 5432. If you already have either of those ports allocated, you can either stop your existing Docker containers or change the port.
+### Planning and Forecasting
+- Breakdown of upcoming launches
+- Estimated future launch costs
+- Distribution by launchpad and rocket type
 
-3. Access the Airflow UI for your local Airflow project. To do so, go to http://localhost:8080/ and log in with 'admin' for both your Username and Password.
+---
 
-You should also be able to access your Postgres Database at 'localhost:5432/postgres'.
+## DAG: `spacex_launch_ingestion`
 
-# Deploy Your Project to Astronomer
+This DAG contains four parallel tasks, each of which fetches and processes a different SpaceX API endpoint:
 
-If you have an Astronomer account, pushing code to a Deployment on Astronomer is simple. For deploying instructions, refer to Astronomer documentation: https://docs.astronomer.io/cloud/deploy-code/
+| Task ID            | Source Endpoint          | Target Table                    |
+|--------------------|--------------------------|----------------------------------|
+| `fetch_launches`   | `/v4/launches`           | `iceberg.spacex.launches`       |
+| `fetch_launchpads` | `/v4/launchpads`         | `iceberg.spacex.launchpads`     |
+| `fetch_rockets`    | `/v4/rockets`            | `iceberg.spacex.rockets`        |
+| `fetch_upcoming`   | `/v4/launches/upcoming`  | `iceberg.spacex.upcoming`       |
 
-# Contact
+Each task uses a modular Python ingestion script located in the `include/` directory. These scripts are responsible for:
 
-The Astronomer CLI is maintained with love by the Astronomer team. To report a bug or suggest a change, reach out to our support.
+- Fetching JSON from the SpaceX API
+- Flattening nested data structures
+- Creating PyStarburst DataFrames
+- Saving to Iceberg tables using `overwrite` mode
+
+---
