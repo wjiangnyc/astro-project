@@ -3,7 +3,7 @@ from datetime import datetime
 from airflow import DAG
 from airflow.operators.bash import BashOperator
 
-default_args = {"owner": "you", "retries": 0}
+default_args = {"owner": "wei j", "retries": 0}
 
 with DAG(
     dag_id="crazy_dag",
