@@ -9,9 +9,9 @@ from include.upcoming_ingest import main as ingest_spacex_upcoming
 from include.insert_rocket360 import main as insert_into_rocket360
 
 default_args = {
-    "owner": "airflow",
-    "start_date": datetime(2023, 1, 1),
-    "retries": 1,
+    "owner": "wei j",
+    "start_date": datetime(2024, 8, 18),
+    "retries": 5,
 }
 
 @dag(
