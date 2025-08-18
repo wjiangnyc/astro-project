@@ -6,6 +6,7 @@ from include.launch_ingest import main as ingest_spacex_launches
 from include.rocket_ingest import main as ingest_spacex_rockets
 from include.pad_ingest import main as ingest_spacex_launchpads
 from include.upcoming_ingest import main as ingest_spacex_upcoming
+from include.insert_rocket360 import main as insert_into_rocket360
 
 default_args = {
     "owner": "airflow",
@@ -38,11 +39,18 @@ def spacex_pipeline():
     def fetch_upcoming():
         ingest_spacex_upcoming()
 
-    # Run all four in parallel
-    fetch_launches()
-    fetch_rockets()
-    fetch_launchpads()
-    fetch_upcoming()
+    @task
+    def insert_rocket360():
+        insert_into_rocket360()
+
+
+    # Define task dependencies
+    l = fetch_launches()
+    p = fetch_launchpads()
+    r = fetch_rockets()
+    u = fetch_upcoming()
+
+    [l, p, r, u] >> insert_rocket360()
 
 # Register the DAG
 spacex_pipeline = spacex_pipeline()
