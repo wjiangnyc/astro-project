@@ -68,7 +68,7 @@ with DAG(
 
     create_table_if_missing = SQLExecuteQueryOperator(
         task_id="create_table_if_missing",
-        conn_id="free_neon",  # Replace this
+        conn_id="free_neon_hosted",  # Replace this
         sql="""
         CREATE TABLE IF NOT EXISTS spacex.launches (
             id TEXT PRIMARY KEY,
